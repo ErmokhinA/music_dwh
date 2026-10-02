@@ -239,4 +239,36 @@ elif page == 'Загрузка в хранилище':
         except Exception as e:
             st.warning(str(e))
 
+    if st.checkbox('📊 SQL-отчёты для проверки'):
+            st.write('Топ-10 жанров')
+            st.dataframe(pd.read_sql('''
+                SELECT g.genre_name, COUNT(*) AS cnt
+                FROM fact_listening f
+                JOIN dim_track t ON f.track_id = t.track_id
+                JOIN dim_genre g ON t.genre_id = g.genre_id
+                GROUP BY g.genre_name
+                ORDER BY cnt DESC
+                LIMIT 10
+            ''', conn))
+
+            st.write('Топ-10 артистов')
+            st.dataframe(pd.read_sql('''
+                SELECT a.artist_name, COUNT(*) AS cnt
+                FROM fact_listening f
+                JOIN dim_track t ON f.track_id = t.track_id
+                JOIN dim_artist a ON t.artist_id = a.artist_id
+                GROUP BY a.artist_name
+                ORDER BY cnt DESC
+                LIMIT 10
+            ''', conn))
+
+            st.write('Активность по дням недели')
+            st.dataframe(pd.read_sql('''
+                SELECT d.day_name, COUNT(*) AS cnt
+                FROM fact_listening f
+                JOIN dim_day d ON f.day_id = d.day_id
+                GROUP BY d.day_name
+                ORDER BY cnt DESC
+            ''', conn))
+
     conn.close()
