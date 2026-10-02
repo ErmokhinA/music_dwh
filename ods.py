@@ -19,17 +19,16 @@ def clean_and_load_ods(p_sdt, p_edt):
     rows = cur.fetchall()
 
     cleaned = []
+    seen = set()
 
     for row in rows:
         userID, Track, artist, genre, City, time, Day = row
-
-        # --- ПРАВИЛА ОЧИСТКИ ---
 
         # 1) Track обязательно должен быть непустым
         if not Track or str(Track).strip() == '':
             continue
 
-        # 2) Приводим к строке и обрезаем пробелы
+        # 2) Обрезаем пробелы и подставляем значения по умолчанию
         userID = str(userID).strip() if userID else ''
         Track = str(Track).strip()
         artist = str(artist).strip() if artist else 'Unknown Artist'
@@ -38,14 +37,19 @@ def clean_and_load_ods(p_sdt, p_edt):
         time = str(time).strip() if time else ''
         Day = str(Day).strip() if Day else 'Unknown'
 
-        # 3) Проверка формата времени HH:MM:SS
+        # 3) Проверка формата времени
         try:
             datetime.strptime(time, '%H:%M:%S')
         except (ValueError, TypeError):
             continue
 
-        # --- ГЕНЕРАЦИЯ dt (синтетическая дата) ---
-        # Детерминированно по хешу userID, чтобы при повторном запуске дата не менялась
+        # 4) Удаляем дубликаты
+        key = (userID, Track, artist, genre, City, time, Day)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        # 5) Генерация синтетической даты dt
         if userID == '':
             hash_val = 0
         else:
